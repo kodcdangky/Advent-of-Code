@@ -82,21 +82,19 @@ def part_2() -> int:
 
         for _ in range(move[1]):
             head[axis] += direction
+            
             for indx, notch in enumerate(rope[1:], start=1):
                 prev_notch = rope[indx - 1]
+                dist = prev_notch[0] - notch[0], prev_notch[1] - notch[1]
 
                 # check if current notch have to move
-                if 2 in (abs(notch[0] - prev_notch[0]), abs(notch[1] - prev_notch[1])):
+                if 2 in (abs(dist[0]), abs(dist[1])):
 
-                    if notch[0] != prev_notch[0]:
-                        notch[0] += (prev_notch[0] - notch[0]) // abs(
-                            prev_notch[0] - notch[0]
-                        )
+                    if dist[0]:
+                        notch[0] += dist[0] // abs(dist[0])
 
-                    if notch[1] != prev_notch[1]:
-                        notch[1] += (prev_notch[1] - notch[1]) // abs(
-                            prev_notch[1] - notch[1]
-                        )
+                    if dist[1]:
+                        notch[1] += dist[1] // abs(dist[1])
 
                 else:
                     break
