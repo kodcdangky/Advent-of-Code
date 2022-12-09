@@ -10,20 +10,18 @@ def day_9(notches: int) -> int:
             map(lambda line: line.split(" "), file.read().splitlines()),
         )
 
-    visited = set()
-
     rope = [[0, 0] for _ in range(notches)]
     head = rope[0]
     tail = rope[-1]
 
-    visited.add(tuple(tail))
+    visited = {tuple(tail)}
 
     for move in instructions:
         axis = 0 if move[0] in ("U", "D") else 1
-        direction = -1 if move[0] in ("U", "L") else 1
+        step = -1 if move[0] in ("U", "L") else 1
 
         for _ in range(move[1]):
-            head[axis] += direction
+            head[axis] += step
 
             for prev_notch, notch in zip(rope, rope[1:]):
                 dist = prev_notch[0] - notch[0], prev_notch[1] - notch[1]
