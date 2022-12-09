@@ -1,0 +1,19 @@
+- Find all scanners directly intersecting with scanner 0
+- Merge all non-sharing beacons from these scanners into scanner 0
+- Find all scanners directly intersecting with the expanded scanner 0
+- Merge
+- Repeat till all non-0 scanners are merged with scanner 0
+- Number of beacons on scanner 0 = Total number of beacons
+
+
+
+-- Finding intersecting scanners:   # time cost go brrrrrrrrrrrrrrrrrr esp for non-intersecting scanners
+- Blind reorient each scanner
+- With each reorientation, search for intersection
+- If >= 12 intersecting beacons --> correct orientation
+- If <12 intersecting beacons with all 24 orientations --> not intersecting (yet)
+
+
+-- Merge non-sharing beacons:
+- Have correct orientation from finding intersection --> find absolute scanner location
+- Just add lol
