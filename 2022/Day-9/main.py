@@ -44,13 +44,15 @@ def part_1() -> int:
 
         for _ in range(move[1]):
             head[axis] += direction
-            if 2 in (abs(head[0] - tail[0]), abs(head[1] - tail[1])):
+            dist = head[0] - tail[0], head[1] - tail[1]
 
-                if head[0] != tail[0]:
-                    tail[0] += (head[0] - tail[0]) // abs(head[0] - tail[0])
+            if 2 in (abs(dist[0]), abs(dist[1])):
 
-                if head[1] != tail[1]:
-                    tail[1] += (head[1] - tail[1]) // abs(head[1] - tail[1])
+                if dist[0]:
+                    tail[0] += dist[0] // abs(dist[0])
+
+                if dist[1]:
+                    tail[1] += dist[1] // abs(dist[1])
 
                 visited[tail[0]][tail[1]] = True
 
@@ -82,7 +84,7 @@ def part_2() -> int:
 
         for _ in range(move[1]):
             head[axis] += direction
-            
+
             for indx, notch in enumerate(rope[1:], start=1):
                 prev_notch = rope[indx - 1]
                 dist = prev_notch[0] - notch[0], prev_notch[1] - notch[1]
