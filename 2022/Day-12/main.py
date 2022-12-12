@@ -1,5 +1,6 @@
 ### https://adventofcode.com/2022/day/12
 
+# My first A* implementation
 # Input reading can be better tbh
 
 INPUT = "input.txt"
