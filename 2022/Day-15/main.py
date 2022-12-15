@@ -52,22 +52,11 @@ def part_1():
     return no_beacon
 
 
-# Extremely slow part 2 but at least it finished, my initial approach wasn't even gonna finish within this lifetime
+# New, more clever approach. Credit: https://www.reddit.com/r/adventofcode/comments/zmfwg1/2022_day_15_part_2_seekin_for_the_beacon/
+# Still quite slow but doesn't use nearly as much memory now
 def part_2():
-    def mergeable(range_0: range, range_1: range) -> bool:
-        return any(
-            (
-                range_0.start in range_1,
-                range_0.stop in range_1,
-                range_0.stop == range_1.start,
-                range_1.start in range_0,
-                range_1.stop in range_0,
-                range_1.stop == range_0.start,
-            )
-        )
-
-    def merge(range_0: range, range_1: range) -> range:
-        return range(min(range_0.start, range_1.start), max(range_0.stop, range_1.stop))
+    def manhattan_dist(point_a: tuple, point_b: tuple) -> int:
+        return abs(point_a[0] - point_b[0]) + abs(point_a[1] - point_b[1])
 
     SEARCH_ZONE = (
         (range(4_000_001), range(4_000_001))
@@ -94,48 +83,24 @@ def part_2():
                 int(beacon[1].removeprefix("y=")),
             )
 
-            data.append((sensor, beacon))
+            data.append((sensor, manhattan_dist(sensor, beacon)))
 
-    visible: dict[int, list[range] | None] = {}
-    filled = set()
-    for sensor, beacon in data:
-        man_dist = abs(sensor[0] - beacon[0]) + abs(sensor[1] - beacon[1])
-        for y in range(
-            max(sensor[1] - man_dist, SEARCH_ZONE[1].start),
-            min(sensor[1] + man_dist + 1, SEARCH_ZONE[1].stop),
-        ):
-            new_range = range(
-                max(
-                    sensor[0] - abs(abs(y - sensor[1]) - man_dist), SEARCH_ZONE[0].start
-                ),
-                min(
-                    sensor[0] + abs(abs(y - sensor[1]) - man_dist) + 1,
-                    SEARCH_ZONE[0].stop,
-                ),
-            )
-            if y in filled:
-                continue
-            if y not in visible:
-                visible[y] = [new_range]
-            else:
-                merged = True
-                while merged:
-                    merged = False
-                    for indx, r in zip(
-                        reversed(range(len(visible[y]))), reversed(visible[y])
-                    ):
-                        if mergeable(r, new_range):
-                            new_range = merge(visible[y].pop(indx), new_range)
-                            merged = True
-                if new_range == SEARCH_ZONE[0]:
-                    filled.add(y)
-                    del visible[y]
-                else:
-                    visible[y].append(new_range)
-
-    y, (range_0, range_1) = visible.popitem()
-    x = range_0.stop if range_0.stop < range_1.start else range_1.stop
-    return x * 4_000_000 + y
+    for pri_sensor, pri_radi in data:
+        pri_radi += 1
+        for y in range(pri_sensor[1] - pri_radi, pri_sensor[1] + pri_radi + 1):
+            if y in SEARCH_ZONE[1]:
+                for x in (
+                    pri_sensor[0] - abs(abs(y - pri_sensor[1]) - pri_radi),
+                    pri_sensor[0] + abs(abs(y - pri_sensor[1]) - pri_radi) + 1,
+                ):
+                    if x in SEARCH_ZONE[0]:
+                        for sec_sensor, sec_radi in data:
+                            if sec_sensor != pri_sensor:
+                                man_dist = manhattan_dist(sec_sensor, (x, y))
+                                if man_dist <= sec_radi:
+                                    break
+                        else:
+                            return x * 4_000_000 + y
 
 
 print(f"{part_1() = }")
