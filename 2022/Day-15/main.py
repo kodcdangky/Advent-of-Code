@@ -96,8 +96,7 @@ def part_2():
                     if x in SEARCH_ZONE[0]:
                         for sec_sensor, sec_radi in data:
                             if sec_sensor != pri_sensor:
-                                man_dist = manhattan_dist(sec_sensor, (x, y))
-                                if man_dist <= sec_radi:
+                                if manhattan_dist(sec_sensor, (x, y)) <= sec_radi:
                                     break
                         else:
                             return x * 4_000_000 + y
