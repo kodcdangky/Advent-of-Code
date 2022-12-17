@@ -106,6 +106,20 @@ def part_1():
 def part_2():
     T_MINUS = 26
 
+    def prune(
+        path: tuple[str | tuple[str]],
+        pressure: dict[tuple[str | tuple[str]], int],
+        pruned: set[tuple[str | tuple[str]]],
+    ):
+        to_be_pruned = [path]
+        while pressure[path][1]:
+            path = pressure[path][1]
+            to_be_pruned.append(path)
+        while to_be_pruned:
+            pruning = to_be_pruned.pop()
+            del pressure[pruning]
+            pruned.add(pruning)
+
     def dfs_valves(
         valves_explored: list[str] = ["AA"],
         old_explored: list[str] | None = None,
@@ -119,7 +133,7 @@ def part_2():
             else (tuple(old_explored), tuple(valves_explored))
         )
         if path not in pressure:
-            pressure[path] = explored_pressure
+            pressure[path] = explored_pressure, None
 
         curr_valve = valves_explored[-1]
         for valve in sorted(
@@ -133,31 +147,44 @@ def part_2():
                     if not old_explored
                     else (tuple(old_explored), tuple(new_explored))
                 )
-                if child_path not in pressure:
-                    dfs_valves(
-                        new_explored,
-                        old_explored,
-                        valves_remaining.difference(new_explored),
-                        new_time,
-                        explored_pressure + valve_map[valve] * new_time,
-                    )
-
-                pressure[path] = max(pressure[child_path], pressure[path])
+                if child_path not in pruned:
+                    if child_path not in pressure:
+                        dfs_valves(
+                            new_explored,
+                            old_explored,
+                            valves_remaining.difference(new_explored),
+                            new_time,
+                            explored_pressure + valve_map[valve] * new_time,
+                        )
+                    if pressure[path][0] >= pressure[child_path][0]:
+                        prune(child_path, pressure, pruned)
+                    else:
+                        if old_child := pressure[path][1]:
+                            prune(old_child, pressure, pruned)
+                        pressure[path] = pressure[child_path][0], child_path
             else:
                 break
 
         if not old_explored:
             child_path = (path, ("AA",))
-            if child_path not in pressure:
-                dfs_valves(
-                    old_explored=valves_explored,
-                    valves_remaining=valves_remaining,
-                    explored_pressure=explored_pressure,
-                )
-            pressure[path] = max(pressure[path], pressure[child_path])
+            if child_path not in pruned:
+                if child_path not in pressure:
+                    dfs_valves(
+                        old_explored=valves_explored,
+                        valves_remaining=valves_remaining,
+                        explored_pressure=explored_pressure,
+                    )
+                if pressure[path][0] >= pressure[child_path][0]:
+                    prune(child_path, pressure, pruned)
+                else:
+                    if old_child := pressure[path][1]:
+                        prune(old_child, pressure, pruned)
+                    pressure[path] = pressure[child_path][0], child_path
 
     min_dist, valve_map = parse_input(INPUT)
     pressure = {}
+    pruned = set()
+
     dfs_valves(
         valves_remaining=set(valve for valve in valve_map if valve_map[valve] > 0)
     )
