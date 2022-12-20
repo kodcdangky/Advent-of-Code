@@ -6,7 +6,6 @@ def mix(cipher, plain_pos = None):
     plain_pos = plain_pos or list(range(len(cipher)))
 
     for idx, cipher_int in enumerate(cipher):
-
         new_pos = plain_pos[idx] + cipher_int
         if new_pos % (len(cipher) - 1):
             new_pos %= len(cipher) - 1
@@ -45,6 +44,7 @@ def part_2():
     KEY = 811589153
     THOUSANDS = 3
     ROUNDS = 10
+
     with open(INPUT) as file:
         cipher = tuple(map(lambda ciph: KEY * int(ciph), file.read().splitlines()))
 
