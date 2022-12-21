@@ -55,8 +55,6 @@ def part_2():
                 monkey_a, ops, monkey_b = job.split()
                 monkeys[monkey] = OPS[ops], monkey_a, monkey_b
 
-    monkeys[ALPHA] = (operator.eq, monkeys[ALPHA][1], monkeys[ALPHA][2])
-
     trace = [HUMAN]
     while trace[-1] not in monkeys[ALPHA]:
         for monkey in monkeys:
