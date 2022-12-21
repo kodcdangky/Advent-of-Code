@@ -12,6 +12,9 @@ OPS = {
 
 
 def part_1():
+    """
+    Simple recursion to travel from root to all children and grandchildrens
+    """
     ALPHA = "root"
 
     def calc(job: tuple | int) -> int:
@@ -35,6 +38,11 @@ def part_1():
 
 
 def part_2():
+    """
+    Build a path from humn back to root, then traverse in reverse to calculate humn
+    Approach assumes humn appears only once in the chain of calculations
+    and will function ONLY when that's the case (which it is with this puzzle, I assume it's intended)
+    """
     ALPHA = "root"
     HUMAN = "humn"
 
