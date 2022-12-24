@@ -3,6 +3,18 @@
 INPUT = "input.txt"
 
 
+def locate_elves(filename):
+    ELF = "#"
+
+    elves = set()
+    with open(filename) as file:
+        for line_idx, line in enumerate(file):
+            for char_idx, char in enumerate(line[:-1]):
+                if char == ELF:
+                    elves.add((line_idx, char_idx))
+    return elves
+
+
 def progress(round, elves):
     from collections import defaultdict
     from itertools import product
@@ -51,14 +63,8 @@ def progress(round, elves):
 
 def part_1():
     ROUNDS = 10
-    ELF = "#"
 
-    elves = set()
-    with open(INPUT) as file:
-        for line_idx, line in enumerate(file):
-            for char_idx, char in enumerate(line[:-1]):
-                if char == ELF:
-                    elves.add((line_idx, char_idx))
+    elves = locate_elves(INPUT)
 
     for round in range(ROUNDS):
         progress(round, elves)
@@ -73,14 +79,7 @@ def part_1():
 
 
 def part_2():
-    ELF = "#"
-
-    elves = set()
-    with open(INPUT) as file:
-        for line_idx, line in enumerate(file):
-            for char_idx, char in enumerate(line[:-1]):
-                if char == ELF:
-                    elves.add((line_idx, char_idx))
+    elves = locate_elves(INPUT)
 
     round = 0
     while progress(round, elves):
