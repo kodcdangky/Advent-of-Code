@@ -1,8 +1,6 @@
 ### https://adventofcode.com/2022/day/16
 
-from fnmatch import fnmatch
-
-INPUT = "test.txt"
+INPUT = "input.txt"
 
 
 def floyd_warshall(valve_map: dict[str, list[str]]) -> dict[str, dict[str, int]]:
@@ -30,6 +28,8 @@ def floyd_warshall(valve_map: dict[str, list[str]]) -> dict[str, dict[str, int]]
 
 
 def parse_input(input_file) -> tuple[dict[str, dict[str, int]], dict[str, int]]:
+    from fnmatch import fnmatch
+
     with open(input_file) as file:
         valve_map: dict[str, list[int, str]] = {}
         for line in file:
@@ -62,134 +62,101 @@ def parse_input(input_file) -> tuple[dict[str, dict[str, int]], dict[str, int]]:
 
 
 def part_1():
+    """
+    Floyd-Warshall to find shortest path between all positive pressure valves
+    Search all paths possible within a 30 min constraint and find the max pressure possible
+    """
     T_MINUS = 30
 
     def dfs_valves(
-        valves_explored: list[str],
-        valves_remaining: set[str],
-        time_remaining: int,
-        explored_pressure: int,
-    ):
-        if tuple(valves_explored) not in pressure:
-            pressure[tuple(valves_explored)] = explored_pressure
-
-        curr_valve = valves_explored[-1]
-        for valve in sorted(
-            valves_remaining,
-            key=min_dist[curr_valve].get,
-        ):
-            if (new_time := time_remaining - min_dist[curr_valve][valve] - 1) > 0:
-                new_explored = valves_explored + [valve]
-                if tuple(new_explored) not in pressure:
-                    dfs_valves(
-                        new_explored,
-                        valves_remaining.difference(new_explored),
-                        new_time,
-                        explored_pressure + valve_map[valve] * new_time,
-                    )
-                pressure[tuple(valves_explored)] = max(
-                    pressure[tuple(new_explored)],
-                    pressure[tuple(valves_explored)],
-                )
-            else:
-                break
-
-    min_dist, valve_map = parse_input(INPUT)
-    pressure = {}
-    dfs_valves(
-        ["AA"], set(valve for valve in valve_map if valve_map[valve] > 0), T_MINUS, 0
-    )
-
-    return pressure[("AA",)]
-
-
-def part_2():
-    T_MINUS = 26
-
-    def prune(
-        path: tuple[str | tuple[str]],
-        pressure: dict[tuple[str | tuple[str]], int],
-        pruned: set[tuple[str | tuple[str]]],
-    ):
-        to_be_pruned = [path]
-        while pressure[path][1]:
-            path = pressure[path][1]
-            to_be_pruned.append(path)
-        while to_be_pruned:
-            pruning = to_be_pruned.pop()
-            del pressure[pruning]
-            pruned.add(pruning)
-
-    def dfs_valves(
         valves_explored: list[str] = ["AA"],
-        old_explored: list[str] | None = None,
         valves_remaining: set[str] = set(),
         time_remaining: int = T_MINUS,
         explored_pressure: int = 0,
     ):
-        path = (
-            tuple(valves_explored)
-            if not old_explored
-            else (tuple(old_explored), tuple(valves_explored))
-        )
-        if path not in pressure:
-            pressure[path] = explored_pressure, None
-
+        max_pressure = explored_pressure
         curr_valve = valves_explored[-1]
-        for valve in sorted(
+        for valve in filter(
+            lambda valve: time_remaining - min_dist[curr_valve][valve] - 1 > 0,
             valves_remaining,
+        ):
+            new_time = time_remaining - min_dist[curr_valve][valve] - 1
+            new_explored = valves_explored + [valve]
+            max_pressure = max(
+                max_pressure,
+                dfs_valves(
+                    new_explored,
+                    valves_remaining.difference(new_explored),
+                    new_time,
+                    explored_pressure + valve_map[valve] * new_time,
+                ),
+            )
+        return max_pressure
+
+    min_dist, valve_map = parse_input(INPUT)
+    return dfs_valves(
+        ["AA"], set(valve for valve in valve_map if valve_map[valve] > 0), T_MINUS, 0
+    )
+
+
+def part_2():
+    """
+    Works for actual input, does not work for example.
+    The version which works for example is far far too costly when used on actual input.
+
+    Search for all possible paths like in part 1, but with a 26 min constraint
+    Record pressures of all full paths (paths that has no more valves to fit/ can not fit any more valves)
+    Find the largest sum of pressure between 2 exclusive paths
+    """
+    from itertools import product
+
+    T_MINUS = 26
+
+    def dfs_valves(
+        valves_explored: list[str] = ["AA"],
+        valves_remaining: set[str] = set(),
+        time_remaining: int = T_MINUS,
+        explored_pressure: int = 0,
+    ):
+        curr_valve = valves_explored[-1]
+        pending = tuple(
+            filter(
+                lambda valve: time_remaining - min_dist[curr_valve][valve] - 1 > 0,
+                valves_remaining,
+            )
+        )
+        if not pending:
+            return pressure.setdefault(tuple(valves_explored), explored_pressure)
+
+        max_pressure = explored_pressure
+        for valve in sorted(
+            pending,
             key=min_dist[curr_valve].get,
         ):
-            if (new_time := time_remaining - min_dist[curr_valve][valve] - 1) > 0:
-                new_explored = valves_explored + [valve]
-                child_path = (
-                    tuple(new_explored)
-                    if not old_explored
-                    else (tuple(old_explored), tuple(new_explored))
-                )
-                if child_path not in pruned:
-                    if child_path not in pressure:
-                        dfs_valves(
-                            new_explored,
-                            old_explored,
-                            valves_remaining.difference(new_explored),
-                            new_time,
-                            explored_pressure + valve_map[valve] * new_time,
-                        )
-                    if pressure[path][0] >= pressure[child_path][0]:
-                        prune(child_path, pressure, pruned)
-                    else:
-                        if old_child := pressure[path][1]:
-                            prune(old_child, pressure, pruned)
-                        pressure[path] = pressure[child_path][0], child_path
-            else:
-                break
-
-        if not old_explored:
-            child_path = (path, ("AA",))
-            if child_path not in pruned:
-                if child_path not in pressure:
-                    dfs_valves(
-                        old_explored=valves_explored,
-                        valves_remaining=valves_remaining,
-                        explored_pressure=explored_pressure,
-                    )
-                if pressure[path][0] >= pressure[child_path][0]:
-                    prune(child_path, pressure, pruned)
-                else:
-                    if old_child := pressure[path][1]:
-                        prune(old_child, pressure, pruned)
-                    pressure[path] = pressure[child_path][0], child_path
+            new_time = time_remaining - min_dist[curr_valve][valve] - 1
+            new_explored = valves_explored + [valve]
+            max_pressure = max(
+                max_pressure,
+                dfs_valves(
+                    new_explored,
+                    valves_remaining.difference(new_explored),
+                    new_time,
+                    explored_pressure + valve_map[valve] * new_time,
+                ),
+            )
+        return max_pressure
 
     min_dist, valve_map = parse_input(INPUT)
     pressure = {}
-    pruned = set()
-
     dfs_valves(
         valves_remaining=set(valve for valve in valve_map if valve_map[valve] > 0)
     )
 
-    return pressure[("AA",)]
+    return max(
+        pressure[ur_path] + pressure[ele_path]
+        for ur_path, ele_path in product(pressure, repeat=2)
+        if set(ur_path).intersection(ele_path) == {"AA"}
+    )
 
 
 print(f"{part_1() = }")
