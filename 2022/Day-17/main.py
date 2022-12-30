@@ -16,58 +16,50 @@ ROCKS = (
 def spawn_rock(
     turn: int, cols: list[list[int]]
 ) -> tuple[tuple[tuple[int]], tuple[int]]:
-    peak, height = highest_peak(cols)
-    cols[peak].extend([0] * abs(min(0, len(cols[peak]) - height - (FALL_SPACE + 1))))
+    rock_height, rock = ROCKS[turn % len(ROCKS)]
+    height = highest_peak(cols) + FALL_SPACE + rock_height
     for col in cols:
-        col.extend([0] * (len(cols[peak]) - len(col)))
+        col.extend([0] * (height - len(col)))
 
-    rock_height, base_rock = ROCKS[turn % len(ROCKS)]
-    rock = []
-    rock.extend((((0,) * rock_height) for _ in range(LEFT_MARGIN)))
-    rock.extend(base_rock)
-    rock.extend(
-        (((0,) * rock_height) for _ in range(len(cols) - len(base_rock) - LEFT_MARGIN))
-    )
-
-    for col, rock_col in zip(cols, rock):
-        col[height + 4 :] = rock_col
-
-    up = len(cols[0])
-    down = len(cols[0]) - rock_height
+    up = height
+    down = height - rock_height
     left = LEFT_MARGIN
-    right = LEFT_MARGIN + len(base_rock)
+    right = LEFT_MARGIN + len(rock)
 
-    return base_rock, (up, down, left, right)
+    for col_idx, rock_col in zip(range(left, right), rock):
+        for row_idx, rock_cell in zip(range(down, up), rock_col):
+            cols[col_idx][row_idx] = rock_cell
+
+    return rock, (up, down, left, right)
 
 
 def erase(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) -> None:
     up, down, left, right = bound
-    for rock_col, col in zip(rock, range(left, right)):
-        for rock_cell, row in zip(rock_col, range(down, up)):
+    for col_idx, rock_col in zip(range(left, right), rock):
+        for row_idx, rock_cell in zip(range(down, up), rock_col):
             if rock_cell:
-                cols[col][row] = 0
+                cols[col_idx][row_idx] = 0
 
 
 def draw(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) -> None:
     up, down, left, right = bound
-    for rock_col, col in zip(rock, range(left, right)):
-        for rock_cell, row in zip(rock_col, range(down, up)):
-            cols[col][row] = rock_cell or cols[col][row]
+    for col_idx, rock_col in zip(range(left, right), rock):
+        for row_idx, rock_cell in zip(range(down, up), rock_col):
+            cols[col_idx][row_idx] = rock_cell or cols[col_idx][row_idx]
 
 
 def shift_left(
     rock: list[list[int]], bound: tuple[int], cols: list[list[int]]
 ) -> tuple[int]:
     up, down, left, right = bound
-    erase(rock, bound, cols)
-
     if left == 0:
-        draw(rock, bound, cols)
         return bound
 
-    for rock_col, col in zip(rock, range(left - 1, right - 1)):
-        for rock_cell, row in zip(rock_col, range(down, up)):
-            if cols[col][row] + rock_cell > 1:
+    erase(rock, bound, cols)
+
+    for col_idx, rock_col in zip(range(left - 1, right - 1), rock):
+        for row_idx, rock_cell in zip(range(down, up), rock_col):
+            if cols[col_idx][row_idx] + rock_cell > 1:
                 draw(rock, bound, cols)
                 return bound
 
@@ -80,15 +72,14 @@ def shift_right(
     rock: list[list[int]], bound: tuple[int], cols: list[list[int]]
 ) -> tuple[int]:
     up, down, left, right = bound
-
-    erase(rock, bound, cols)
     if right == len(cols):
-        draw(rock, bound, cols)
         return bound
 
-    for rock_col, col in zip(rock, range(left + 1, right + 1)):
-        for rock_cell, row in zip(rock_col, range(down, up)):
-            if cols[col][row] + rock_cell > 1:
+    erase(rock, bound, cols)
+
+    for col_idx, rock_col in zip(range(left + 1, right + 1), rock):
+        for row_idx, rock_cell in zip(range(down, up), rock_col):
+            if cols[col_idx][row_idx] + rock_cell > 1:
                 draw(rock, bound, cols)
                 return bound
 
@@ -97,17 +88,18 @@ def shift_right(
     return new_bound
 
 
-def shift_down(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) -> bool:
+def shift_down(
+    rock: list[list[int]], bound: tuple[int], cols: list[list[int]]
+) -> None | tuple[int]:
     up, down, left, right = bound
-
-    erase(rock, bound, cols)
     if down == 0:
-        draw(rock, bound, cols)
         return
 
-    for rock_col, col in zip(rock, range(left, right)):
-        for rock_cell, row in zip(rock_col, range(down - 1, up - 1)):
-            if cols[col][row] + rock_cell > 1:
+    erase(rock, bound, cols)
+
+    for col_idx, rock_col in zip(range(left, right), rock):
+        for row_idx, rock_cell in zip(range(down - 1, up - 1), rock_col):
+            if cols[col_idx][row_idx] + rock_cell > 1:
                 draw(rock, bound, cols)
                 return
 
@@ -117,53 +109,16 @@ def shift_down(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) 
 
 
 def highest_peak(cols: list[list[int]]) -> tuple[int]:
-    reversed_cols = [reversed(col) for col in cols]
-    for height, row in enumerate(zip(*reversed_cols), start=1):
-        for col_idx, cell in enumerate(row):
-            if cell:
-                return col_idx, len(cols[col_idx]) - height
-    return 0, -1
+    reversed_cols = (reversed(col) for col in cols)
+    for idx_from_top, row in enumerate(zip(*reversed_cols)):
+        if 1 in set(row):
+            return len(cols[0]) - idx_from_top
+    raise Exception("highest_peak() did not return a value")
 
 
-def is_plane(cols: list[list[int]]) -> bool:
-    reversed_cols = [reversed(col) for col in cols]
-    for row in zip(*reversed_cols):
-        if set(row) == {1}:
-            return True
-        elif set(row) == {0, 1}:
-            return False
-
-
-def part_1():
-    TURNS = 2022
-
-    with open(INPUT) as file:
-        wind = file.readline()[:-1]
-
-    cols = [[1] for _ in range(COLS)]
-    wind_idx = 0
-    for turn in range(TURNS):
-        # spawn new rock
-        rock, rock_bound = spawn_rock(turn, cols)
-
-        # rock falling
-        while True:
-            direction = wind[wind_idx]
-            wind_idx = (wind_idx + 1) % len(wind)
-            rock_bound = (
-                shift_left(rock, rock_bound, cols)
-                if direction == "<"
-                else shift_right(rock, rock_bound, cols)
-            )
-            if not (rock_bound := shift_down(rock, rock_bound, cols)):
-                break
-
-    return highest_peak(cols)[1]
-
-
-def part_2():
+def day_17(turns):
     def inverse_bfs(cols: list[list[int]]):
-        if len(cols[0]) <= highest_peak(cols)[1] + 1:
+        if len(cols[0]) <= highest_peak(cols) + 1:
             for col in cols:
                 col.append(0)
 
@@ -190,57 +145,92 @@ def part_2():
 
     def inverse(flood_btm: int, cols: list[list[int]]) -> tuple[int, tuple[tuple[int]]]:
         abyss = max(0, flood_btm - 1)
-        peak = highest_peak(cols)[1]
-        top_shape = tuple(tuple(col[abyss : peak + 1]) for col in cols)
+        top_shape = tuple(tuple(col[abyss : highest_peak(cols) + 1]) for col in cols)
         return abyss, top_shape
-
-    TURNS = 10**12
-    FIRST_STATE = (0, 0, (1,) * 7)
 
     with open(INPUT) as file:
         wind = file.readline()[:-1]
 
     cols = [[1] for _ in range(COLS)]
     wind_idx = 0
-    states = {}
     top_shape = (1,) * 7
     abyss = 0
-    for turn in range(TURNS):
-        state = turn % len(ROCKS), wind_idx, top_shape
-        if state in states:
-            new_abyss, wind_idx, top_shape = states[state]
+    cycle_detector = {}
+    next_state = 0, 0, top_shape
+    peak = []
+    for turn in range(turns):
+        state = next_state
+        # spawn new rock
+        rock, rock_bound = spawn_rock(turn, cols)
+
+        # rock falling
+        while True:
+            direction = wind[wind_idx]
+            wind_idx = (wind_idx + 1) % len(wind)
+            rock_bound = (
+                shift_left(rock, rock_bound, cols)
+                if direction == "<"
+                else shift_right(rock, rock_bound, cols)
+            )
+            if not (rock_bound := shift_down(rock, rock_bound, cols)):
+                break
+
+        new_abyss, top_shape = inverse(inverse_bfs(cols), cols)
+
+        if new_abyss:
             abyss += new_abyss
             cols = list(map(list, top_shape))
-        else:
-            # spawn new rock
-            rock, rock_bound = spawn_rock(turn, cols)
 
-            # rock falling
-            while True:
-                direction = wind[wind_idx]
-                wind_idx = (wind_idx + 1) % len(wind)
-                rock_bound = (
-                    shift_left(rock, rock_bound, cols)
-                    if direction == "<"
-                    else shift_right(rock, rock_bound, cols)
-                )
-                if not (rock_bound := shift_down(rock, rock_bound, cols)):
-                    break
+        peak.append(highest_peak(cols) + abyss - 1)
 
-            new_abyss, top_shape = inverse(inverse_bfs(cols), cols)
-            states[state] = new_abyss, wind_idx, top_shape
+        next_state = (turn + 1) % len(ROCKS), wind_idx, top_shape
+        cycle_detector[state] = (turn, next_state)
 
-            if new_abyss:
-                abyss += new_abyss
-                cols = list(map(list, top_shape))
-        if turn != 0 and state == FIRST_STATE:
-            print(f"CYCLE FOUND!: AT TURN {turn} FROM 0")
-            return
-        if turn % 10**9 == 0:
-            print(f"{turn} * 10**9")
+        if next_state in cycle_detector:
+            last_seen = cycle_detector[next_state][0]
+            cycle_len = turn - (last_seen - 1)
+            cycle_peak_gain = peak[turn] - peak[last_seen - 1]
+            cycle_count = (turns - last_seen) // cycle_len
 
-    return highest_peak(cols)[1] + abyss
+            # Honestly not sure why a -1 is required here
+            # as I think I've prevented off-by-one error
+            # in one of the previous step but it is how it is
+            return (
+                cycle_peak_gain * cycle_count
+                + peak[(turns - last_seen) % cycle_len + last_seen]
+            ) - 1
+
+    return highest_peak(cols) + abyss - 1
 
 
-print(f"{part_1() = }")
-print(f"{part_2() = }")
+print(f"Part 1: {day_17(2022)}")
+print(f"Part 2: {day_17(10**12)}")
+
+
+# Legacy code, is faster for part 1 but astronomically slower for part 2 (probably years)
+"""def part_1():
+    TURNS = 2022
+
+    with open(INPUT) as file:
+        wind = file.readline()[:-1]
+
+    cols = [[1] for _ in range(COLS)]
+    wind_idx = 0
+    for turn in range(TURNS):
+        # spawn new rock
+        rock, rock_bound = spawn_rock(turn, cols)
+
+        # rock falling
+        while True:
+            direction = wind[wind_idx]
+            wind_idx = (wind_idx + 1) % len(wind)
+            rock_bound = (
+                shift_left(rock, rock_bound, cols)
+                if direction == "<"
+                else shift_right(rock, rock_bound, cols)
+            )
+            if not (rock_bound := shift_down(rock, rock_bound, cols)):
+                break
+
+    return highest_peak(cols) - 1
+print(f"{part_1() = }")"""
