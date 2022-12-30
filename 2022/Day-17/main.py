@@ -15,7 +15,7 @@ ROCKS = (
 
 def spawn_rock(
     turn: int, cols: list[list[int]]
-) -> tuple[tuple[tuple[int]], tuple[int]]:
+) -> tuple[tuple[tuple[int, ...]], tuple[int, ...]]:
     rock_height, rock = ROCKS[turn % len(ROCKS)]
     height = highest_peak(cols) + FALL_SPACE + rock_height
     for col in cols:
@@ -33,7 +33,9 @@ def spawn_rock(
     return rock, (up, down, left, right)
 
 
-def erase(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) -> None:
+def erase(
+    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+) -> None:
     up, down, left, right = bound
     for col_idx, rock_col in zip(range(left, right), rock):
         for row_idx, rock_cell in zip(range(down, up), rock_col):
@@ -41,7 +43,9 @@ def erase(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) -> No
                 cols[col_idx][row_idx] = 0
 
 
-def draw(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) -> None:
+def draw(
+    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+) -> None:
     up, down, left, right = bound
     for col_idx, rock_col in zip(range(left, right), rock):
         for row_idx, rock_cell in zip(range(down, up), rock_col):
@@ -49,8 +53,8 @@ def draw(rock: list[list[int]], bound: tuple[int], cols: list[list[int]]) -> Non
 
 
 def shift_left(
-    rock: list[list[int]], bound: tuple[int], cols: list[list[int]]
-) -> tuple[int]:
+    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+) -> tuple[int, ...]:
     up, down, left, right = bound
     if left == 0:
         return bound
@@ -69,8 +73,8 @@ def shift_left(
 
 
 def shift_right(
-    rock: list[list[int]], bound: tuple[int], cols: list[list[int]]
-) -> tuple[int]:
+    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+) -> tuple[int, ...]:
     up, down, left, right = bound
     if right == len(cols):
         return bound
@@ -89,8 +93,8 @@ def shift_right(
 
 
 def shift_down(
-    rock: list[list[int]], bound: tuple[int], cols: list[list[int]]
-) -> None | tuple[int]:
+    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+) -> None | tuple[int, ...]:
     up, down, left, right = bound
     if down == 0:
         return
@@ -108,7 +112,7 @@ def shift_down(
     return new_bound
 
 
-def highest_peak(cols: list[list[int]]) -> tuple[int]:
+def highest_peak(cols: list[list[int]]) -> int:
     reversed_cols = (reversed(col) for col in cols)
     for idx_from_top, row in enumerate(zip(*reversed_cols)):
         if 1 in set(row):
@@ -125,7 +129,7 @@ def day_17(turns):
         c_bound = range(len(cols))
         r_bound = range(len(cols[0]))
 
-        flooded = [(0, len(cols[0]) - 1)]
+        flooded: list[tuple[int, int]] = [(0, len(cols[0]) - 1)]
         bottom = len(cols[0]) - 1
         for coord in flooded:
             for offset in ((0, 1), (0, -1), (-1, 0), (1, 0)):
@@ -187,18 +191,18 @@ def day_17(turns):
         cycle_detector[state] = (turn, next_state)
 
         if next_state in cycle_detector:
-            last_seen = cycle_detector[next_state][0]
-            cycle_len = turn - (last_seen - 1)
-            cycle_peak_gain = peak[turn] - peak[last_seen - 1]
-            cycle_count = (turns - last_seen) // cycle_len
+            cycle_start = cycle_detector[next_state][0]
+            cycle_len = turn - (cycle_start - 1)
+            cycle_peak_gain = (
+                peak[turn] - peak[cycle_start - 1] if cycle_start > 0 else peak[turn]
+            )
+            cycle_count = (turns - cycle_start) // cycle_len
+            cycle_final_pos = (turns - cycle_start) % cycle_len + cycle_start
 
             # Honestly not sure why a -1 is required here
             # as I think I've prevented off-by-one error
             # in one of the previous step but it is how it is
-            return (
-                cycle_peak_gain * cycle_count
-                + peak[(turns - last_seen) % cycle_len + last_seen]
-            ) - 1
+            return cycle_peak_gain * cycle_count + peak[cycle_final_pos] - 1
 
     return highest_peak(cols) + abyss - 1
 
