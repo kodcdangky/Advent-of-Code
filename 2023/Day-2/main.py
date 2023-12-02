@@ -16,27 +16,29 @@ def parse_data(raw: str):
 
     return list(map(parse_line, raw.splitlines()))
 
+
 def part_1(games: list[list[int | list[int]]]):
     MAX_RGB = (12, 13, 14)
+
     def is_possible(game: list[int | list[int]]):
         return all(map(lambda rgb: all(color <= max_color for color, max_color in zip(rgb, MAX_RGB)), game[1:]))
 
     return sum(map(lambda game: game[0], filter(is_possible, games)))
 
+
 def part_2(games: list[list[int | list[int]]]):
     def get_power(stages: list[list[int]]) -> int:
         from math import prod
-        all_rgb = list(zip(*stages))
-        return prod((max(all_rgb[0]), max(all_rgb[1]), max(all_rgb[2])))
+        return prod(map(max, list(zip(*stages))))
 
     return sum(map(get_power, map(lambda game: game[1:], games)))
+
 
 def main():
     with open("input.txt") as file:
         games = parse_data(file.read())
     print(part_1(games))
     print(part_2(games))
-
 
 
 if __name__ == "__main__":
