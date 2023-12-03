@@ -27,11 +27,9 @@ def part_1(games: list[list[int | list[int]]]):
 
 
 def part_2(games: list[list[int | list[int]]]):
-    def get_power(stages: list[list[int]]) -> int:
-        from math import prod
-        return prod(map(max, list(zip(*stages))))
-
-    return sum(map(get_power, map(lambda game: game[1:], games)))
+    from math import prod
+    return sum(map(lambda stages: prod(map(max, zip(*stages))),
+                   map(lambda game: game[1:], games)))
 
 
 def main():
