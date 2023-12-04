@@ -15,7 +15,7 @@ ROCKS = (
 
 def spawn_rock(
     turn: int, cols: list[list[int]]
-) -> tuple[tuple[tuple[int, ...]], tuple[int, ...]]:
+) -> tuple[tuple[tuple[int, ...], ...], tuple[int, ...]]:
     rock_height, rock = ROCKS[turn % len(ROCKS)]
     height = highest_peak(cols) + FALL_SPACE + rock_height
     for col in cols:
@@ -34,7 +34,7 @@ def spawn_rock(
 
 
 def erase(
-    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+    rock: tuple[tuple[int, ...], ...], bound: tuple[int, ...], cols: list[list[int]]
 ) -> None:
     up, down, left, right = bound
     for col_idx, rock_col in zip(range(left, right), rock):
@@ -44,7 +44,7 @@ def erase(
 
 
 def draw(
-    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+    rock: tuple[tuple[int, ...], ...], bound: tuple[int, ...], cols: list[list[int]]
 ) -> None:
     up, down, left, right = bound
     for col_idx, rock_col in zip(range(left, right), rock):
@@ -53,7 +53,7 @@ def draw(
 
 
 def shift_left(
-    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+    rock: tuple[tuple[int, ...], ...], bound: tuple[int, ...], cols: list[list[int]]
 ) -> tuple[int, ...]:
     up, down, left, right = bound
     if left == 0:
@@ -73,7 +73,7 @@ def shift_left(
 
 
 def shift_right(
-    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+    rock: tuple[tuple[int, ...], ...], bound: tuple[int, ...], cols: list[list[int]]
 ) -> tuple[int, ...]:
     up, down, left, right = bound
     if right == len(cols):
@@ -93,7 +93,7 @@ def shift_right(
 
 
 def shift_down(
-    rock: tuple[tuple[int, ...]], bound: tuple[int, ...], cols: list[list[int]]
+    rock: tuple[tuple[int, ...], ...], bound: tuple[int, ...], cols: list[list[int]]
 ) -> None | tuple[int, ...]:
     up, down, left, right = bound
     if down == 0:
@@ -147,7 +147,7 @@ def day_17(turns):
 
         return bottom
 
-    def inverse(flood_btm: int, cols: list[list[int]]) -> tuple[int, tuple[tuple[int]]]:
+    def inverse(flood_btm: int, cols: list[list[int]]) -> tuple[int, tuple[tuple[int, ...], ...]]:
         abyss = max(0, flood_btm - 1)
         top_shape = tuple(tuple(col[abyss : highest_peak(cols) + 1]) for col in cols)
         return abyss, top_shape
@@ -155,7 +155,7 @@ def day_17(turns):
     with open(INPUT) as file:
         wind = file.readline()[:-1]
 
-    cols = [[1] for _ in range(COLS)]
+    cols: list[list[int]] = [[1] for _ in range(COLS)]
     wind_idx = 0
     top_shape = (1,) * 7
     abyss = 0
@@ -204,14 +204,14 @@ def day_17(turns):
             # in one of the previous step but it is how it is
             return cycle_peak_gain * cycle_count + peak[cycle_final_pos] - 1
 
-    return highest_peak(cols) + abyss - 1
+    return peak[-1]
 
 
 print(f"Part 1: {day_17(2022)}")
 print(f"Part 2: {day_17(10**12)}")
 
 
-# Legacy code, is faster for part 1 but astronomically slower for part 2 (probably years)
+# Deprecated, is faster for part 1 but astronomically slower for part 2 (probably years)
 """def part_1():
     TURNS = 2022
 
