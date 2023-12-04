@@ -20,7 +20,7 @@ def part_1(tickets: list[list[list[int]]]) -> int:
 
 
 def part_2(tickets: list[list[list[int]]]) -> int:
-    tickets_quant = [1 for _ in tickets]
+    tickets_quant = [1] * len(tickets)
     for indx, (winning, numbers) in enumerate(tickets):
         for other in range(indx + 1,
                            min(len(tickets), indx + 1 + sum(number in winning for number in numbers))):
