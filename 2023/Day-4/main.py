@@ -15,8 +15,7 @@ def parse_data(lines: list[str]) -> list[list[list[int]]]:
 
 
 def part_1(tickets: list[list[list[int]]]) -> int:
-    from math import floor
-    return sum(floor(2 ** (sum(number in winning for number in numbers) - 1)) for winning, numbers in tickets)
+    return sum(int(2 ** (sum(number in winning for number in numbers) - 1)) for winning, numbers in tickets)
 
 
 def part_2(tickets: list[list[list[int]]]) -> int:
