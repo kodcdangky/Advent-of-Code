@@ -4,15 +4,15 @@ def parse_data(raw: str) -> list[list[list[int]]]:
     def parse_line(line: str):
         _, turns = map(lambda part: part.strip(), line.split(":"))
 
-        parsed_line: list[list[int]] = []
+        parsed_turns: list[list[int]] = []
 
-        for stage in map(lambda part: part.strip(), turns.split(";")):
+        for stage in map(lambda stage: stage.strip(), turns.split(";")):
             pull = [0, 0, 0]
-            for ball in map(lambda part: part.strip(), stage.split(",")):
+            for ball in map(lambda ball: ball.strip(), stage.split(",")):
                 quant, color = ball.split()
                 pull[INDEX[color]] = int(quant)
-            parsed_line.append(pull)
-        return parsed_line
+            parsed_turns.append(pull)
+        return parsed_turns
 
     return list(map(parse_line, raw.splitlines()))
 
