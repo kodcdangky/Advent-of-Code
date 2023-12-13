@@ -3,46 +3,31 @@ def parse_data(raw: str):
 
 
 def part_1(data: list[list[str]]):
-    def expand_universe():
-        for indx, row in reversed(tuple(enumerate(data))):
-            if "#" not in row:
-                data.insert(indx + 1, row.copy())
-
-        for indx in reversed(range(len(data[0]))):
-            if "#" not in (row[indx] for row in data):
-                for row_indx, _ in enumerate(data):
-                    data[row_indx].insert(indx + 1, ".")
-
-    expand_universe()
-    galaxies = list((row_indx, col_indx)
-                    for row_indx, row in enumerate(data)
-                    for col_indx, char in enumerate(row)
-                    if char == "#")
-
-    return sum(abs(row - other_row) + abs(col - other_col)
-               for indx, (row, col) in enumerate(galaxies)
-               for (other_row, other_col) in galaxies[indx:])
+    return part_2(data, 2)
 
 
-def part_2(data: list[list[str]]):
+# Not very time or space efficient but it does the job
+def part_2(data: list[list[str]], expand_factor: int):
     def count_empty_rows(start_row: int, end_row: int) -> int:
         min_row, max_row = min(start_row, end_row), max(start_row, end_row)
-        return sum(1 for row in range(min_row + 1, max_row + 1) if "#" not in data[row])
+        return sum("#" not in data[row] for row in range(min_row + 1, max_row + 1))
 
     def count_empty_cols(start_col: int, end_col: int) -> int:
         min_col, max_col = min(start_col, end_col), max(start_col, end_col)
-        return sum(1 for col in range(min_col + 1, max_col + 1) if "#" not in transposed_data[col])
+        return sum("#" not in transposed_data[col] for col in range(min_col + 1, max_col + 1))
 
-    transposed_data = list(list(row[col_indx] for row in data) for col_indx, _ in enumerate(data[0]))
+    transposed_data = list(list(row[col_indx] for row in data)
+                           for col_indx, _ in enumerate(data[0]))
 
     galaxies = list((row_indx, col_indx)
                     for row_indx, row in enumerate(data)
                     for col_indx, char in enumerate(row)
                     if char == "#")
 
-    return sum(abs(row - other_row) + abs(col - other_col) + 999_999 * (count_empty_rows(row, other_row) + count_empty_cols(col, other_col))
-               for indx, (row, col) in enumerate(galaxies)
-               for (other_row, other_col) in galaxies[indx:])
+    return sum((abs(row - other_row) + abs(col - other_col)
+                + (expand_factor - 1) * (count_empty_rows(row, other_row) + count_empty_cols(col, other_col)))
+               for indx, (row, col) in enumerate(galaxies[:-1])
+               for (other_row, other_col) in galaxies[indx + 1:])
 
 
 def main():
@@ -50,7 +35,7 @@ def main():
         raw = file.read()
 
     print(part_1(parse_data(raw)))
-    print(part_2(parse_data(raw))) # Not very time or space efficient but it does the job
+    print(part_2(parse_data(raw), 1_000_000))
 
 
 if __name__ == "__main__":
