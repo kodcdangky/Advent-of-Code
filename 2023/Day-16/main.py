@@ -66,19 +66,14 @@ def simulate_light(grid: list[str], start: tuple[int, int], heading: Direction):
                 # as any beam energizing a splitter initially automatically
                 # energizes all paths leading from that splitter immediately
                 elif (row, col) not in energized:
-                    if grid[row][col] == SPLIT_H:
-                        if direction in (UP, DOWN):
-                            append_beam(beams_next, row, col, LEFT)
-                            append_beam(beams_next, row, col, RIGHT)
-                        else:
-                            append_beam(beams_next, row, col, direction)
-
-                    elif grid[row][col] == SPLIT_V:
-                        if direction in (LEFT, RIGHT):
-                            append_beam(beams_next, row, col, UP)
-                            append_beam(beams_next, row, col, DOWN)
-                        else:
-                            append_beam(beams_next, row, col, direction)
+                    if grid[row][col] == SPLIT_H and direction in (UP, DOWN):
+                        append_beam(beams_next, row, col, LEFT)
+                        append_beam(beams_next, row, col, RIGHT)
+                    elif grid[row][col] == SPLIT_V and direction in (LEFT, RIGHT):
+                        append_beam(beams_next, row, col, UP)
+                        append_beam(beams_next, row, col, DOWN)
+                    else:
+                        append_beam(beams_next, row, col, direction)
 
                 energized.add((row, col))
 
