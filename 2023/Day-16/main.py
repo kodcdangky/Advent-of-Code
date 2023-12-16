@@ -45,8 +45,8 @@ def simulate_light(grid: list[str], start: tuple[int, int], heading: Direction):
         for direction in filter(lambda direction: beams_next[direction], beams_next):
             row, col = beams_next[direction].popleft()
             if row in range(width) and col in range(height):
-                # Empties and Mirrors can be considered indiscriminately
-                # as the only true repeat through them are caused by splitters
+                # Empties and Mirrors can be considered indiscriminately as the
+                # only true repeat beams through them are caused by splitters
                 # merging, which is prevented when coming across splitters
                 if grid[row][col] == EMPTY:
                     append_beam(beams_next, row, col, direction)
@@ -62,9 +62,9 @@ def simulate_light(grid: list[str], start: tuple[int, int], heading: Direction):
                     next_direction = dir_group[not dir_group.index(direction)]
                     append_beam(beams_next, row, col, next_direction)
 
-                # Splitters are only considered if it isn't already energized,
+                # Splitters are only considered if they aren't already energized,
                 # as any beam energizing a splitter initially automatically
-                # energizes all paths leading from it immediately
+                # energizes all paths leading from that splitter immediately
                 elif (row, col) not in energized:
                     if grid[row][col] == SPLIT_H:
                         if direction in (UP, DOWN):
