@@ -28,6 +28,7 @@ def parse_data(raw: str):
 
 def simulate_light(grid: list[str], start: tuple[int, int], heading: Direction):
     from collections import deque
+    from functools import partial
 
     def append_beam(beams_next: dict[Direction, deque[tuple[int, int]]],
                     row: int, col: int, direction: Direction):
@@ -44,12 +45,13 @@ def simulate_light(grid: list[str], start: tuple[int, int], heading: Direction):
     while any(beams_next.values()):
         for direction in filter(lambda direction: beams_next[direction], beams_next):
             row, col = beams_next[direction].popleft()
+            append_beam_dir = partial(append_beam, beams_next, row, col)
             if row in range(width) and col in range(height):
                 # Empties and Mirrors can be considered indiscriminately as the
                 # only true repeat beams through them are caused by splitters
                 # merging, which is prevented when coming across splitters
                 if grid[row][col] == EMPTY:
-                    append_beam(beams_next, row, col, direction)
+                    append_beam_dir(direction)
 
                 elif grid[row][col] in (MIRROR, MIRROR_ALT):
                     if grid[row][col] == MIRROR:
@@ -60,20 +62,20 @@ def simulate_light(grid: list[str], start: tuple[int, int], heading: Direction):
                                      else (DOWN, RIGHT))
 
                     next_direction = dir_group[not dir_group.index(direction)]
-                    append_beam(beams_next, row, col, next_direction)
+                    append_beam_dir(next_direction)
 
                 # Splitters are only considered if they aren't already energized,
-                # as any beam energizing a splitter initially automatically
+                # as any beam energizing a splitter initially already
                 # energizes all paths leading from that splitter immediately
                 elif (row, col) not in energized:
                     if grid[row][col] == SPLIT_H and direction in (UP, DOWN):
-                        append_beam(beams_next, row, col, LEFT)
-                        append_beam(beams_next, row, col, RIGHT)
+                        append_beam_dir(LEFT)
+                        append_beam_dir(RIGHT)
                     elif grid[row][col] == SPLIT_V and direction in (LEFT, RIGHT):
-                        append_beam(beams_next, row, col, UP)
-                        append_beam(beams_next, row, col, DOWN)
+                        append_beam_dir(UP)
+                        append_beam_dir(DOWN)
                     else:
-                        append_beam(beams_next, row, col, direction)
+                        append_beam_dir(direction)
 
                 energized.add((row, col))
 
